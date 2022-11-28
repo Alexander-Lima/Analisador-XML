@@ -187,13 +187,12 @@ class App():
         file_qty = self.origin_path.__len__() 
 
         try:
+            self.create_destiny_folder()
             for file in self.origin_path:
                 with open(file, "r", encoding="latin1") as input:
                     unidecoded_read_file = uni(input.read())
                     translation_table = unidecoded_read_file.maketrans(self.characters_table)
                     output_file =  unidecoded_read_file.translate(translation_table)
-
-                if(not os.path.exists(self.destiny_path)): os.mkdir(self.destiny_path)
 
                 with open(os.path.join(self.destiny_path, os.path.basename(file)), "w", encoding="latin1") as output:
                     output.write(output_file)
@@ -218,6 +217,7 @@ class App():
             mb.showerror("ERRO!", e)
 
     def split_file(self):
+        self.create_destiny_folder()
         try:
             if(self.origin_path.__len__() > 1): raise Exception("Selecione apenas um arquivo!")
 
@@ -228,7 +228,8 @@ class App():
                 elif(user_input is False): raise Exception("Informe uma tag para realizar a divisão!")
 
                 unidecoded_read_file = uni(input.read())
-                doc_headers = re.findall("<\?[\s\S]*\?>", unidecoded_read_file)[0]
+                doc_headers_result = re.findall("<\?[\s\S]*\?>", unidecoded_read_file)
+                doc_headers = doc_headers_result[0] if doc_headers_result.__len__() > 0 else ""
                 delimiter_tag_wo_prefix = self.remove_prefixes(user_input)
                 unidecoded_read_file_wo_prefix = self.remove_prefixes(unidecoded_read_file)
 
@@ -257,6 +258,9 @@ class App():
    
         except BaseException as e:
             mb.showerror("ERRO!", e)
+
+    def create_destiny_folder(self):
+        if(not os.path.exists(self.destiny_path)): os.mkdir(self.destiny_path)
 
     def remove_prefixes(self, doc):
         remove_prefix_opentag = "<[^\/][\S]{0,10}:"
