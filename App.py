@@ -194,7 +194,7 @@ class App():
                     output_file =  unidecoded_read_file.translate(translation_table)
 
                 self.create_destiny_folder()
-                
+
                 with open(os.path.join(self.destiny_path, os.path.basename(file)), "w", encoding="latin1") as output:
                     output.write(output_file)
 
@@ -284,8 +284,9 @@ class App():
             background="white",
             highlightthickness=4)
         top_level.configure(highlightbackground="black")
-        top_level.overrideredirect(True)
+        # top_level.overrideredirect(True)
         self.set_window_geometry(top_level, 250, 110)
+        top_level.bind("<FocusOut>", top_level.destroy)
 
         label = tk.Label(
             master=top_level,
