@@ -187,13 +187,14 @@ class App():
         file_qty = self.origin_path.__len__() 
 
         try:
-            self.create_destiny_folder()
             for file in self.origin_path:
                 with open(file, "r", encoding="latin1") as input:
                     unidecoded_read_file = uni(input.read())
                     translation_table = unidecoded_read_file.maketrans(self.characters_table)
                     output_file =  unidecoded_read_file.translate(translation_table)
 
+                self.create_destiny_folder()
+                
                 with open(os.path.join(self.destiny_path, os.path.basename(file)), "w", encoding="latin1") as output:
                     output.write(output_file)
 
@@ -217,7 +218,6 @@ class App():
             mb.showerror("ERRO!", e)
 
     def split_file(self):
-        self.create_destiny_folder()
         try:
             if(self.origin_path.__len__() > 1): raise Exception("Selecione apenas um arquivo!")
 
@@ -236,6 +236,8 @@ class App():
             separated_docs = re.findall(
                 f'{delimiter_tag_wo_prefix}[\s\S]*?</{delimiter_tag_wo_prefix.replace("<", "")}',
                 unidecoded_read_file_wo_prefix)
+
+            self.create_destiny_folder()
 
             for index, doc in enumerate(separated_docs):
                 with open(f'{self.destiny_path}/{index + 1}.xml', "w", encoding="latin1") as output:
