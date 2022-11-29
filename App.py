@@ -284,9 +284,10 @@ class App():
             background="white",
             highlightthickness=4)
         top_level.configure(highlightbackground="black")
-        # top_level.overrideredirect(True)
+        top_level.overrideredirect(True)
+        top_level.focus()
         self.set_window_geometry(top_level, 250, 110)
-        top_level.bind("<FocusOut>", top_level.destroy)
+        top_level.bind("<FocusOut>", lambda x: cancel_handler())
 
         label = tk.Label(
             master=top_level,
