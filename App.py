@@ -114,7 +114,7 @@ class App():
         option1_radio.select()
         self.widgets["option1_image"] = option1_image
         self.widgets["option1_radio"] = option1_radio
-        option1_radio.place(x=180, y=50)
+        option1_radio.place(x=180, y=40)
 
         option2_image = tk.PhotoImage(file="./images/option2.png")
         option2_radio = tk.Radiobutton(
@@ -126,7 +126,19 @@ class App():
             value=2)
         self.widgets["option2_image"] = option2_image
         self.widgets["option2_radio"] = option2_radio
-        option2_radio.place(x=180, y=140)
+        option2_radio.place(x=180, y=100)
+
+        option3_image = tk.PhotoImage(file="./images/option3.png")
+        option3_radio = tk.Radiobutton(
+            self.window,
+            image=option3_image,
+            borderwidth=0,
+            bg="white",
+            variable=self.selected_option,
+            value=3)
+        self.widgets["option3_image"] = option3_image
+        self.widgets["option3_radio"] = option3_radio
+        option3_radio.place(x=180, y=160)
 
         init_button_image = tk.PhotoImage(file="./images/init_button.png")
         init_button = tk.Button(
@@ -222,20 +234,23 @@ class App():
             if(self.origin_path.__len__() > 1): raise Exception("Selecione apenas um arquivo!")
 
             with open(self.origin_path[0], "r", encoding="latin1") as input:
-                user_input = self.get_user_input() 
+                tag_name = self.get_user_input('INFORME A TAG DE SEPARAÇÃO \n NO FORMATO "<TAG>"') 
 
                 if(self.isCanceled is True): return
-                elif(user_input is False): raise Exception("Informe uma tag para realizar a divisão!")
+                elif(tag_name is False): raise Exception("Informe uma tag para realizar a divisão!")
 
                 unidecoded_read_file = uni(input.read())
                 doc_headers_result = re.findall("<\?[\s\S]*\?>", unidecoded_read_file)
                 doc_headers = doc_headers_result[0] if doc_headers_result.__len__() > 0 else ""
-                delimiter_tag_wo_prefix = self.remove_prefixes(user_input)
+                delimiter_tag_wo_prefix = self.remove_prefixes(tag_name)
                 unidecoded_read_file_wo_prefix = self.remove_prefixes(unidecoded_read_file)
 
             separated_docs = re.findall(
                 f'{delimiter_tag_wo_prefix}[\s\S]*?</{delimiter_tag_wo_prefix.replace("<", "")}',
                 unidecoded_read_file_wo_prefix)
+
+            if (separated_docs.__len__() < 1): 
+                raise Exception("Não foi possível dividir o arquivo, verifique a tag informada!")
 
             self.create_destiny_folder()
 
@@ -243,9 +258,6 @@ class App():
                 with open(f'{self.destiny_path}/{index + 1}.xml', "w", encoding="latin1") as output:
                     output.write(doc_headers + doc)
             
-            if (separated_docs.__len__() < 1): 
-                raise Exception("Não foi possível dividir o arquivo, verifique a tag informada!")
-
             mb.showinfo("AVISO!",
              'Separação concluída!'
              '\nO arquivo gerou '
@@ -271,7 +283,7 @@ class App():
         output_string = re.sub(remove_prefix_opentag, "<", doc)
         return re.sub(remove_prefix_closetag, "</", output_string)
         
-    def get_user_input(self):
+    def get_user_input(self, message):
         self.isCanceled=False
         user_input = tk.StringVar()
 
@@ -291,7 +303,7 @@ class App():
 
         label = tk.Label(
             master=top_level,
-            text='INFORME A TAG DE SEPARAÇÃO \n NO FORMATO "<TAG>"',
+            text=message,
             font=("Arial", 10, "bold"),
             background="white")
         label.pack()
@@ -331,6 +343,43 @@ class App():
         self.window.wait_window(top_level)
 
         return user_input.get() if user_input.get() !="" else False
+        
+    def remove_tag(self):
+        try:
+            tag_name = self.get_user_input('INFORME A TAG QUE DESEJA \n REMOVER NO FORMATO "<TAG>":')
+
+            if(self.isCanceled is True): return
+            elif(tag_name is False): raise Exception("Informe uma tag para remover!")
+
+            sanitized_tag_name = self.sanitize_tag_name(tag_name)
+            self.create_destiny_folder()
+
+            for index, file in enumerate(self.origin_path):
+                output = ""
+
+                with open(file, "r", encoding="latin1") as input:
+                    output = re.sub("<{tag}>[\s\S]*<\/{tag}>".format(tag=sanitized_tag_name), "", input.read())
+                
+                with open(f'{self.destiny_path}/{index + 1}.xml', "w", encoding="latin1") as output_file:
+                    output_file.write(output)
+
+            path_length = self.origin_path.__len__()
+            message = (f'{path_length} notas processadas com sucesso.'
+                        if path_length > 1
+                        else f'{path_length} nota processada com sucesso.')
+            mb.showinfo("AVISO!", message)
+
+        except FileNotFoundError:
+            mb.showerror("ERRO!", "Arquivo de origem ou destino não encontrado!")
+
+        except UnicodeDecodeError:
+            mb.showerror("ERRO!", "Falha ao realizar o decode do arquivo!")
+
+        except BaseException as e:
+            mb.showerror("ERRO!", e)
+
+    def sanitize_tag_name(self, tag):
+        return re.sub("[<|>]", "", tag)  
 
     def start(self):
         if(self.origin_path.__len__() < 1 and self.destiny_path == ""):
@@ -346,6 +395,7 @@ class App():
         match self.selected_option.get():
             case "1": self.clear_special_characters()
             case "2": self.split_file()
+            case "3": self.remove_tag()
 
 if __name__ == "__main__":
     app = App()
