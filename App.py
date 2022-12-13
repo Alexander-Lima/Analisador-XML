@@ -161,7 +161,7 @@ class App():
             parent=self.window,
             title="SELECIONE UM OU MAIS ARQUIVOS XML:")
 
-        if(not filename.__len__() == 0):
+        if(filename):
             self.origin_path = filename
             text_box_origin = self.widgets.get("origin_text")
             self.update_text_box([text_box_origin], filename[0])
@@ -170,11 +170,11 @@ class App():
         filename = fd.askdirectory(
             parent=self.window,
             initialdir=(self.origin_path
-                            if self.origin_path != ""
+                            if self.origin_path
                             else self.desktop_path),
              title="SELECIONE A PASTA DE DESTINO:")
 
-        if(not filename.__len__() == 0):
+        if(filename):
             self.destiny_path = f'{filename}/saída'
             text_box_destiny = self.widgets.get("destiny_text")
             self.update_text_box([text_box_destiny], filename)
@@ -218,10 +218,6 @@ class App():
 
         except FileNotFoundError:
             mb.showerror("ERRO!", "Caminho de origem ou destino não existe!")
-            self.origin_path = self.destiny_path = ""
-            text_box_origin = self.widgets.get("origin_text")
-            text_box_destiny = self.widgets.get("destiny_text")
-            self.update_text_box([text_box_origin, text_box_destiny], "")
 
         except UnicodeDecodeError:
             mb.showerror("ERRO!", "Falha ao realizar o decode do arquivo!")
@@ -241,7 +237,7 @@ class App():
 
                 unidecoded_read_file = uni(input.read())
                 doc_headers_result = re.findall("<\?[\s\S]*\?>", unidecoded_read_file)
-                doc_headers = doc_headers_result[0] if doc_headers_result.__len__() > 0 else ""
+                doc_headers = doc_headers_result[0] if doc_headers_result else ""
                 delimiter_tag_wo_prefix = self.remove_prefixes(tag_name)
                 unidecoded_read_file_wo_prefix = self.remove_prefixes(unidecoded_read_file)
 
@@ -249,13 +245,18 @@ class App():
                 f'{delimiter_tag_wo_prefix}[\s\S]*?</{delimiter_tag_wo_prefix.replace("<", "")}',
                 unidecoded_read_file_wo_prefix)
 
-            if (separated_docs.__len__() < 1): 
+            if(not separated_docs): 
                 raise Exception("Não foi possível dividir o arquivo, verifique a tag informada!")
 
             self.create_destiny_folder()
 
             for index, doc in enumerate(separated_docs):
-                with open(f'{self.destiny_path}/{index + 1}.xml', "w", encoding="latin1") as output:
+                file_number_tag = re.findall("<[Numero|numero]*>\d*<\/[Numero|numero]*>", doc)
+                file_number = (re.sub("<Numero>|<\/Numero>|<numero>|<\/numero>", "", file_number_tag[0])
+                                     if file_number_tag else "")
+                file_name = file_number if file_number else f'nota {index + 1}'
+      
+                with open(f'{self.destiny_path}/{file_name}.xml', "w", encoding="latin1") as output:
                     output.write(doc_headers + doc)
             
             mb.showinfo("AVISO!",
@@ -382,15 +383,9 @@ class App():
         return re.sub("[<|>]", "", tag)  
 
     def start(self):
-        if(self.origin_path.__len__() < 1 and self.destiny_path == ""):
+        if(not self.origin_path or self.destiny_path == ""):
              mb.showerror("ERRO!", "Selecione a origem e o destino!")
              return
-        elif(self.origin_path.__len__() < 1): 
-            mb.showerror("ERRO!", "Arquivo de origem não selecionado!")
-            return
-        elif(self.destiny_path == ""): 
-            mb.showerror("ERRO!", "Caminho de destino não selecionado!")
-            return
 
         match self.selected_option.get():
             case "1": self.clear_special_characters()
@@ -400,7 +395,5 @@ class App():
 if __name__ == "__main__":
     app = App()
     
-
-
 
 
