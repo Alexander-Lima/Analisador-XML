@@ -230,23 +230,17 @@ class App():
             if(self.origin_path.__len__() > 1): raise Exception("Selecione apenas um arquivo!")
 
             with open(self.origin_path[0], "r", encoding="latin1") as input:
-                tag_name = self.get_user_input('INFORME A TAG DE SEPARAÇÃO \n NO FORMATO "<TAG>"') 
+                tag_name = self.get_user_input('INFORME A TAG DE\n SEPARAÇÃO SEM "<>"') 
 
                 if(self.isCanceled is True): return
                 elif(tag_name is False): raise Exception("Informe uma tag para realizar a divisão!")
 
                 unidecoded_read_file = uni(input.read())
-                doc_headers_result = re.findall("<\?[\s\S]*\?>", unidecoded_read_file)
-                doc_headers = doc_headers_result[0] if doc_headers_result else ""
-                delimiter_tag_wo_prefix = self.remove_prefixes(tag_name)
-                unidecoded_read_file_wo_prefix = self.remove_prefixes(unidecoded_read_file)
 
-            separated_docs = re.findall(
-                f'{delimiter_tag_wo_prefix}[\s\S]*?</{delimiter_tag_wo_prefix.replace("<", "")}',
-                unidecoded_read_file_wo_prefix)
+            separated_docs = re.findall(f'<{tag_name}[\s\S]*?></{tag_name}>', unidecoded_read_file)
 
             if(not separated_docs): 
-                raise Exception("Não foi possível dividir o arquivo, verifique a tag informada!")
+                raise Exception("Não foi possível dividir o arquivo, verifique a tag informada!")  
 
             self.create_destiny_folder()
 
@@ -257,7 +251,7 @@ class App():
                 file_name = file_number if file_number else f'nota {index + 1}'
       
                 with open(f'{self.destiny_path}/{file_name}.xml', "w", encoding="latin1") as output:
-                    output.write(doc_headers + doc)
+                    output.write(doc)
             
             mb.showinfo("AVISO!",
              'Separação concluída!'
@@ -276,13 +270,6 @@ class App():
 
     def create_destiny_folder(self):
         if(not os.path.exists(self.destiny_path)): os.mkdir(self.destiny_path)
-
-    def remove_prefixes(self, doc):
-        remove_prefix_opentag = "<[^\/][\S]{0,10}:"
-        remove_prefix_closetag = "<\/[\S]{0,10}:"
-
-        output_string = re.sub(remove_prefix_opentag, "<", doc)
-        return re.sub(remove_prefix_closetag, "</", output_string)
         
     def get_user_input(self, message):
         self.isCanceled=False
@@ -347,7 +334,7 @@ class App():
         
     def remove_tag(self):
         try:
-            tag_name = self.get_user_input('INFORME A TAG QUE DESEJA \n REMOVER NO FORMATO "<TAG>":')
+            tag_name = self.get_user_input('INFORME A TAG QUE DESEJA \n REMOVER SEM "<>"')
 
             if(self.isCanceled is True): return
             elif(tag_name is False): raise Exception("Informe uma tag para remover!")
